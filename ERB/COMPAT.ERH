@@ -1,0 +1,27 @@
+﻿;=== the suite's own globals, and the headers that core.header tests ===
+#DIM COMPAT_PASS
+#DIM COMPAT_FAIL
+#DIM COMPAT_RAN
+#DIMS COMPAT_TOPIC
+#DIMS COMPAT_FAILED, 300
+
+;--- for core.header (CORE_HEADER.ERB)
+#DEFINE HDR_TEN 10
+#DEFINE HDR_PAREN (2 + 3)
+#DEFINE HDR_BARE 2 + 3
+#DEFINE HDR_NAME "macro text"
+; Emuera expands macros only after the headers are loaded (Process.cs), so
+; a #DEFINE can't be used in an ERH file, not even as a #DIM size.
+#DIM CONST HDR_CONST = 7
+#DIM CONST HDR_CONSTS, 3 = 1, 2, 4
+#DIMS CONST HDR_CONSTSTR = "fixed"
+#DIM HDR_INIT, 4 = 9, 8, 7
+#DIMS HDR_INITS, 2 = "a", "b"
+#DIM HDR_GRID, 3, 4
+#DIM HDR_CUBE, 2, 3, 4
+#DIM SAVEDATA HDR_SAVED
+#DIM GLOBAL HDR_GLOBAL
+
+;--- for core.arrays (ARRAYCOPY takes names)
+#DIM ARR_A, 10
+#DIM ARR_B, 10

@@ -1,0 +1,189 @@
+﻿;=== core.functions: arguments, RETURN/RESULT, #FUNCTION(S), locals, REF ===
+@CORE_FUNCTIONS
+#DIM LX
+#DIM LA, 3
+#DIMS LS
+CALL TOPIC, "core.functions"
+;--- arguments, defaults, strings
+CALL FN_ADD(2, 3)
+CALL CHECKN, "call with parentheses", RESULT, 5
+CALL FN_ADD, 4, 5
+CALL CHECKN, "call with commas", RESULT, 9
+CALL FN_ADD(7)
+CALL CHECKN, "default argument value", RESULT, 17
+CALL FN_ARGS(1, "two")
+CALL CHECKS, "string argument into ARGS", RESULTS, "two1"
+CALL FN_NAMED_ARGS(6, 7)
+CALL CHECKN, "named arguments", RESULT, 67
+;--- RETURN and RESULT
+CALL FN_MULTI
+CALL CHECKN, "return a list fills RESULT:0..", RESULT * 100 + RESULT:1 * 10 + RESULT:2, 123
+RESULT = 5
+CALL FN_BARE_RETURN
+CALL CHECKN, "bare return is 0", RESULT, 0
+RESULT = 5
+CALL FN_FALLS_OFF
+CALL CHECKN, "running off the end is return 0", RESULT, 0
+;--- #FUNCTION / #FUNCTIONS in expressions
+CALL CHECKN, "#function in an expression", FN_TWICE(4) + 1, 9
+CALL CHECKS, "#functions in an expression", FN_GREET("x") + "!", "hi x!"
+RESULT = 9
+LX = FN_TWICE(1)
+CALL CHECKN, "#function leaves RESULT alone", RESULT, 9
+CALL CHECKN, "#function without RETURNF gives 0", FN_NO_RETURNF(), 0
+CALL CHECKN, "#function inside #function", FN_TWICE(FN_TWICE(3)), 12
+CALLF FN_SET_FLAG
+CALL CHECKN, "callf runs a #function as a statement", FLAG:3, 1
+FLAG:3 = 0
+CALL CHECKN, "recursion", FN_FACT(10), 3628800
+; #FUNCTION calls nest at most 100 deep in Emuera (Process.GetValue)
+CALL CHECKN, "deep recursion", FN_DEPTH(90), 90
+;--- LOCAL and private non-DYNAMIC #DIM keep their values between calls
+CALL FN_COUNTER
+CALL FN_COUNTER
+CALL FN_COUNTER
+CALL CHECKN, "local keeps its value", RESULT, 3
+CALL FN_PRIVATE_COUNTER
+CALL FN_PRIVATE_COUNTER
+CALL CHECKN, "private #dim keeps its value", RESULT, 2
+CALL FN_INIT_ONCE
+CALL FN_INIT_ONCE
+CALL CHECKN, "#dim initialiser runs once", RESULT, 12
+;--- #DIM DYNAMIC: a fresh variable each call
+CALL FN_DYNAMIC
+CALL FN_DYNAMIC
+CALL CHECKN, "#dim dynamic starts fresh", RESULT, 1
+CALL CHECKN, "recursion with #dim dynamic", FN_DYN_SUM(5), 15
+;--- each function has its own LOCAL
+LOCAL = 11
+CALL FN_SET_LOCAL
+CALL CHECKN, "locals are per function", LOCAL, 11
+;--- ARG / ARGS keep the caller's values only for that call
+CALL FN_ADD(1, 1)
+CALL FN_ADD(5)
+CALL CHECKN, "omitted argument takes the default again", RESULT, 15
+;--- REF: arrays and variables passed by reference
+LA:0 = 1
+LA:1 = 2
+CALL FN_REF_ARRAY(LA)
+CALL CHECKN, "ref array is shared", LA:0 * 10 + LA:1, 15
+LX = 3
+CALL FN_REF_INT(LX)
+CALL CHECKN, "ref int is shared", LX, 30
+LS = abc
+CALL FN_REF_STR(LS)
+CALL CHECKS, "ref string is shared", LS, "abc!"
+;--- an argument that is a variable is passed by value
+LX = 3
+CALL FN_ADD(LX, 1)
+CALL CHECKN, "plain argument is a copy", LX, 3
+;--- a function that sets RESULTS
+CALL FN_SET_RESULTS
+CALL CHECKS, "results set by a function", RESULTS, "set"
+;--- RETURNF ends the function at once
+CALL CHECKN, "returnf ends the function", FN_EARLY(), 1
+
+@FN_ADD(LP, LQ = 10)
+#DIM LP
+#DIM LQ
+RETURN LP + LQ
+
+@FN_ARGS, ARG, ARGS
+RESULTS = %ARGS%{ARG}
+
+@FN_NAMED_ARGS, ARG:0, ARG:1
+RETURN ARG:0 * 10 + ARG:1
+
+@FN_MULTI
+RETURN 1, 2, 3
+
+@FN_BARE_RETURN
+RETURN
+
+@FN_FALLS_OFF
+LOCAL = 1
+
+@FN_TWICE(LN)
+#FUNCTION
+#DIM LN
+RETURNF LN * 2
+
+@FN_GREET(WHO)
+#FUNCTIONS
+#DIMS WHO
+RETURNF "hi " + WHO
+
+@FN_NO_RETURNF
+#FUNCTION
+LOCAL = 1
+
+@FN_SET_FLAG
+#FUNCTION
+FLAG:3 = 1
+RETURNF 0
+
+@FN_FACT(LN)
+#FUNCTION
+#DIM LN
+SIF LN <= 1
+	RETURNF 1
+RETURNF LN * FN_FACT(LN - 1)
+
+@FN_DEPTH(LN)
+#FUNCTION
+#DIM LN
+SIF LN <= 0
+	RETURNF 0
+RETURNF 1 + FN_DEPTH(LN - 1)
+
+@FN_COUNTER
+LOCAL += 1
+RETURN LOCAL
+
+@FN_PRIVATE_COUNTER
+#DIM LC
+LC += 1
+RETURN LC
+
+@FN_INIT_ONCE
+#DIM LV = 3
+LV += LV
+RETURN LV
+
+@FN_DYNAMIC
+#DIM DYNAMIC LD
+LD += 1
+RETURN LD
+
+@FN_DYN_SUM(LN)
+#FUNCTION
+#DIM LN
+#DIM DYNAMIC KEEP
+KEEP = LN
+SIF LN <= 0
+	RETURNF 0
+RETURNF FN_DYN_SUM(LN - 1) + KEEP
+
+@FN_SET_LOCAL
+LOCAL = 99
+
+@FN_REF_ARRAY(LR)
+#DIM REF LR, 0
+LR:1 = 5
+LR:0 = 1
+
+@FN_REF_INT(LR)
+#DIM REF LR
+LR *= 10
+
+@FN_REF_STR(LR)
+#DIMS REF LR
+LR += "!"
+
+@FN_SET_RESULTS
+RESULTS = set
+
+@FN_EARLY
+#FUNCTION
+RETURNF 1
+RETURNF 2

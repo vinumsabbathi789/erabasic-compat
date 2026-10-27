@@ -1,0 +1,90 @@
+﻿;=== core.arrays: VARSET, ARRAY* statements, array functions ===
+@CORE_ARRAYS
+#DIM LV, 10
+#DIMS VS, 6
+#DIM LX
+#DIM LY
+CALL TOPIC, "core.arrays"
+;--- VARSET: whole array, or start..end (end not included)
+VARSET LV, 7
+CALL CHECKN, "varset fills everything", LV:0 + LV:9, 14
+VARSET LV
+CALL CHECKN, "varset with no value clears", SUMARRAY(LV), 0
+VARSET LV, 5, 2, 4
+CALL CHECKS, "varset a range", ARR_STR(LV), "0,0,5,5,0,0,0,0,0,0"
+VARSET VS, "s"
+CALL CHECKS, "varset a string array", VS:0 + VS:5, "ss"
+;--- SUMARRAY, MAXARRAY, MINARRAY, MATCH, INRANGEARRAY (end not included)
+LV = 3, 1, 4, 1, 5, 9, 2, 6, 5, 3
+CALL CHECKN, "sumarray", SUMARRAY(LV), 39
+CALL CHECKN, "sumarray range", SUMARRAY(LV, 2, 5), 10
+CALL CHECKN, "maxarray", MAXARRAY(LV), 9
+CALL CHECKN, "maxarray range", MAXARRAY(LV, 0, 4), 4
+CALL CHECKN, "minarray", MINARRAY(LV), 1
+CALL CHECKN, "minarray range", MINARRAY(LV, 4, 7), 2
+CALL CHECKN, "match counts equal elements", MATCH(LV, 5), 2
+CALL CHECKN, "match range", MATCH(LV, 1, 2), 1
+CALL CHECKN, "inrangearray counts min <= x < max", INRANGEARRAY(LV, 3, 6), 5
+;--- FINDELEMENT / FINDLASTELEMENT give an index or -1
+CALL CHECKN, "findelement", FINDELEMENT(LV, 5), 4
+CALL CHECKN, "findelement from an index", FINDELEMENT(LV, 5, 5), 8
+CALL CHECKN, "findelement missing", FINDELEMENT(LV, 7), -1
+CALL CHECKN, "findlastelement", FINDLASTELEMENT(LV, 1), 3
+VS '= "apple", "banana", "cherry", "an", "", ""
+CALL CHECKN, "findelement string, exact", FINDELEMENT(VS, "an", 0, 6, 1), 3
+CALL CHECKN, "findelement string is a regex match", FINDELEMENT(VS, "an", 0, 6), 1
+CALL CHECKN, "findelement string regex anchored", FINDELEMENT(VS, "^ch", 0, 6), 2
+;--- ARRAYSORT
+ARRAYSORT LV
+CALL CHECKS, "arraysort ascending", ARR_STR(LV), "1,1,2,3,3,4,5,5,6,9"
+ARRAYSORT LV, BACK
+CALL CHECKS, "arraysort descending", ARR_STR(LV), "9,6,5,5,4,3,3,2,1,1"
+ARRAYSORT LV, FORWARD, 0, 3
+CALL CHECKS, "arraysort a range", ARR_STR(LV), "5,6,9,5,4,3,3,2,1,1"
+VS '= "pear", "Apple", "fig"
+ARRAYSORT VS, FORWARD, 0, 3
+CALL CHECKS, "arraysort strings", VS:0 + "," + VS:1 + "," + VS:2, "Apple,fig,pear"
+;--- ARRAYSHIFT: positive moves toward the end, the gap gets the fill value
+LV = 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+ARRAYSHIFT LV, 2, 0
+CALL CHECKS, "arrayshift right", ARR_STR(LV), "0,0,1,2,3,4,5,6,7,8"
+ARRAYSHIFT LV, -3, -1
+CALL CHECKS, "arrayshift left", ARR_STR(LV), "2,3,4,5,6,7,8,-1,-1,-1"
+LV = 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+ARRAYSHIFT LV, 1, 99, 2, 4
+CALL CHECKS, "arrayshift a range", ARR_STR(LV), "1,2,99,3,4,5,7,8,9,10"
+;--- ARRAYREMOVE: removes count elements, the end fills with 0
+LV = 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+ARRAYREMOVE LV, 2, 3
+CALL CHECKS, "arrayremove", ARR_STR(LV), "1,2,6,7,8,9,10,0,0,0"
+;--- ARRAYCOPY takes names
+ARR_A = 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+VARSET ARR_B
+ARRAYCOPY "ARR_A", "ARR_B"
+CALL CHECKN, "arraycopy", ARR_B:0 * 1000 + ARR_B:9, 1010
+;--- SWAP
+LX = 1
+LY = 2
+SWAP LX, LY
+CALL CHECKN, "swap", LX * 10 + LY, 21
+;--- ALLSAMES, NOSAMES, GROUPMATCH
+CALL CHECKN, "allsames true", ALLSAMES(3, 3, 3), 1
+CALL CHECKN, "allsames false", ALLSAMES(3, 3, 4), 0
+CALL CHECKN, "nosames true", NOSAMES(1, 2, 3), 1
+CALL CHECKN, "nosames false", NOSAMES(1, 2, 1), 0
+CALL CHECKN, "groupmatch counts matches", GROUPMATCH(2, 1, 2, 3, 2), 2
+CALL CHECKN, "groupmatch strings", GROUPMATCH("a", "a", "b", "a"), 2
+
+; the 10 elements of an array, comma-separated
+@ARR_STR(LR)
+#FUNCTIONS
+#DIM REF LR, 0
+#DIMS LS
+#DIM LI
+LS =
+FOR LI, 0, 10
+	SIF LI > 0
+		LS += ","
+	LS += TOSTR(LR:LI)
+NEXT
+RETURNF LS

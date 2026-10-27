@@ -1,0 +1,70 @@
+﻿;=== em.functions: Emuera-EM/EE functions beyond vanilla Emuera ===
+@EM_FUNCTIONS
+#DIM LX
+#DIMS NAMES, 2
+CALL TOPIC, "em.functions"
+;--- variables by name
+FLAG:3 = 30
+CALL CHECKN, "getvar", GETVAR("FLAG:3"), 30
+SETVAR "FLAG:4", 44
+CALL CHECKN, "setvar", FLAG:4, 44
+SAVESTR:1 = abc
+CALL CHECKS, "getvars", GETVARS("SAVESTR:1"), "abc"
+SAVESTR:1 =
+FLAG:3 = 0
+FLAG:4 = 0
+CALL CHECK, "existvar", EXISTVAR("FLAG") != 0 && EXISTVAR("NO_SUCH_VAR") == 0
+CALL CHECKN, "isdefined", ISDEFINED("HDR_TEN") * 10 + ISDEFINED("NO_SUCH_MACRO"), 10
+;--- functions by name
+CALL CHECKN, "existfunction of a #function is 2", EXISTFUNCTION("EM_TWICE"), 2
+CALL CHECKN, "existfunction of a #functions is 3", EXISTFUNCTION("EM_NAMED"), 3
+CALL CHECKN, "existfunction of a plain function is 1", EXISTFUNCTION("EM_FUNCTIONS"), 1
+CALL CHECKN, "existfunction missing", EXISTFUNCTION("NO_SUCH_FUNCTION"), 0
+CALL CHECKN, "existmeth of a string function is 2", EXISTMETH("EM_NAMED"), 2
+CALL CHECKN, "existmeth missing", EXISTMETH("NO_SUCH_FUNCTION"), 0
+CALL CHECKN, "getmeth", GETMETH("EM_TWICE", 0, 21), 42
+CALL CHECKN, "getmeth default", GETMETH("NO_SUCH_FUNCTION", 13), 13
+CALL CHECKS, "getmeths", GETMETHS("EM_NAMED", "none"), "named"
+CALL CHECKS, "getdoingfunction", GETDOINGFUNCTION(), "EM_FUNCTIONS"
+;--- TRYCALLF runs a #FUNCTION if it exists
+FLAG:3 = 0
+TRYCALLF EM_SET_FLAG
+TRYCALLF NO_SUCH_FUNCTION
+CALL CHECKN, "trycallf", FLAG:3, 1
+FLAG:3 = 0
+;--- REGEXPMATCH counts matches
+CALL CHECKN, "regexpmatch count", REGEXPMATCH("a1b2c3", "[0-9]"), 3
+;--- REPLACE's EM mode 2: plain text, not a regex
+CALL CHECKS, "replace plain text", REPLACE("a.b.c", ".", "-", 2), "a-b-c"
+;--- ARRAYMSORTEX: sort by a key array, reorder the arrays named; by
+;--- default it stops at the key's first 0
+VARSET ARR_A
+VARSET ARR_B
+ARR_A = 3, 1, 2
+ARR_B = 30, 10, 20
+NAMES '= "ARR_A", "ARR_B"
+LX = ARRAYMSORTEX(ARR_A, NAMES)
+CALL CHECKN, "arraymsortex the key", ARR_A:0 * 100 + ARR_A:1 * 10 + ARR_A:2, 123
+CALL CHECKN, "arraymsortex the other array", ARR_B:0 * 10000 + ARR_B:1 * 100 + ARR_B:2, 102030
+LX = ARRAYMSORTEX("ARR_A", NAMES, 0)
+CALL CHECKN, "arraymsortex descending, key by name", ARR_A:0 * 100 + ARR_A:1 * 10 + ARR_A:2, 321
+;--- VARSETEX sets a variable named by a string
+VARSET ARR_B
+LX = VARSETEX("ARR_B", 5, 1, 2, 4)
+CALL CHECKN, "varsetex a range", ARR_B:1 * 100 + ARR_B:2 * 10 + ARR_B:3, 55
+VARSET ARR_A
+VARSET ARR_B
+
+@EM_TWICE(LN)
+#FUNCTION
+#DIM LN
+RETURNF LN * 2
+
+@EM_NAMED
+#FUNCTIONS
+RETURNF "named"
+
+@EM_SET_FLAG
+#FUNCTION
+FLAG:3 = 1
+RETURNF 0

@@ -1,0 +1,43 @@
+﻿;=== core.math: numeric functions and bit statements ===
+@CORE_MATH
+#DIM LX
+CALL TOPIC, "core.math"
+CALL CHECKN, "abs", ABS(-5) + ABS(3), 8
+CALL CHECKN, "sign", SIGN(-9) * 100 + SIGN(0) * 10 + SIGN(4), -99
+CALL CHECKN, "max of many", MAX(3, 9, -2, 7), 9
+CALL CHECKN, "min of many", MIN(3, 9, -2, 7), -2
+CALL CHECKN, "limit below", LIMIT(-5, 0, 10), 0
+CALL CHECKN, "limit above", LIMIT(15, 0, 10), 10
+CALL CHECKN, "limit inside", LIMIT(5, 0, 10), 5
+CALL CHECKN, "inrange includes both ends", INRANGE(10, 0, 10) + INRANGE(0, 0, 10), 2
+CALL CHECKN, "inrange outside", INRANGE(11, 0, 10), 0
+CALL CHECKN, "power function", POWER(2, 10), 1024
+CALL CHECKN, "power of 0", POWER(7, 0), 1
+LX = 0
+POWER LX, 3, 4
+CALL CHECKN, "power statement", LX, 81
+CALL CHECKN, "sqrt rounds down", SQRT(10), 3
+CALL CHECKN, "sqrt exact", SQRT(144), 12
+CALL CHECKN, "cbrt", CBRT(27), 3
+CALL CHECKN, "log rounds down", LOG(100), 4
+CALL CHECKN, "log10", LOG10(1000), 3
+CALL CHECKN, "exponent is e to the power", EXPONENT(3), 20
+;--- bits
+CALL CHECKN, "getbit set", GETBIT(5, 2), 1
+CALL CHECKN, "getbit clear", GETBIT(5, 1), 0
+LX = 0
+SETBIT LX, 0, 3
+CALL CHECKN, "setbit several bits", LX, 9
+CLEARBIT LX, 0
+CALL CHECKN, "clearbit", LX, 8
+INVERTBIT LX, 3, 1
+CALL CHECKN, "invertbit", LX, 2
+SETBIT LX, 63
+CALL CHECK, "bit 63 is the sign", LX < 0
+;--- TIMES multiplies by a decimal, truncating
+LX = 100
+TIMES LX, 1.5
+CALL CHECKN, "times", LX, 150
+LX = 10
+TIMES LX, 0.33
+CALL CHECKN, "times truncates", LX, 3

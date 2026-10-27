@@ -1,0 +1,97 @@
+﻿;=== core.operators: 64-bit integer arithmetic, precedence, logic, strings ===
+@CORE_OPERATORS
+#DIM LX
+#DIM BIG
+CALL TOPIC, "core.operators"
+;--- division truncates toward zero; % has the dividend's sign
+CALL CHECKN, "7 / 2", 7 / 2, 3
+CALL CHECKN, "-7 / 2", -7 / 2, -3
+CALL CHECKN, "7 / -2", 7 / -2, -3
+CALL CHECKN, "7 % 3", 7 % 3, 1
+CALL CHECKN, "-7 % 3", -7 % 3, -1
+CALL CHECKN, "7 % -3", 7 % -3, 1
+;--- 64 bits, wrapping on overflow
+BIG = 9223372036854775807
+CALL CHECKN, "64-bit maximum", BIG / 1000000000000, 9223372
+BIG += 1
+CALL CHECK, "overflow wraps to negative", BIG < 0
+CALL CHECKN, "minimum minus one wraps", BIG - 1 == 9223372036854775807, 1
+CALL CHECKN, "multiplication wraps", 4294967296 * 4294967296, 0
+;--- shifts: arithmetic right shift, count taken mod 64
+CALL CHECKN, "left shift", 3 << 4, 48
+CALL CHECKN, "right shift", 100 >> 2, 25
+CALL CHECKN, "right shift keeps the sign", -16 >> 2, -4
+CALL CHECKN, "shift count mod 64", 1 << 65, 2
+CALL CHECK, "shift into the sign bit", (1 << 63) < 0
+;--- bitwise and unary
+CALL CHECKN, "bitand", 12 & 10, 8
+CALL CHECKN, "bitor", 12 | 10, 14
+CALL CHECKN, "bitxor", 12 ^ 10, 6
+CALL CHECKN, "bitnot", ~0, -1
+CALL CHECKN, "bitnot 5", ~5, -6
+CALL CHECKN, "not of non-zero", !5, 0
+CALL CHECKN, "not of zero", !0, 1
+CALL CHECKN, "unary minus of a group", -(2 + 3), -5
+CALL CHECKN, "unary plus", +4, 4
+CALL CHECKN, "double negation", -(-3), 3
+;--- comparisons give 1 or 0
+CALL CHECKN, "comparison results add up", (5 > 3) + (5 >= 5) + (2 < 1) + (2 <= 2) + (1 == 1) + (1 != 1), 4
+;--- precedence: unary > * / % > + - > << >> > < <= > >= > == != > & | ^ > && || ^^ !& !| > ? #
+CALL CHECKN, "* before +", 2 + 3 * 4, 14
+CALL CHECKN, "% with *, left to right", 7 * 3 % 4, 1
+CALL CHECKN, "+ before <<", 1 + 1 << 2, 8
+CALL CHECKN, "<< before <", 1 << 2 < 5, 1
+CALL CHECKN, "< before ==", 1 == 2 < 3, 1
+CALL CHECKN, "== before &", 3 & 2 == 2, 1
+CALL CHECKN, "& | ^ share one level, left to right", 1 | 2 & 0, 0
+CALL CHECKN, "^ then & left to right", 4 ^ 1 & 1, 1
+CALL CHECKN, "& before &&", 2 & 1 && 1, 0
+CALL CHECKN, "&& || share one level, left to right", 1 || 0 && 0, 0
+CALL CHECKN, "|| after && left to right", 0 && 0 || 1, 1
+CALL CHECKN, "?# lowest", 1 + 1 ? 5 # 6, 5
+CALL CHECKN, "?# nests to the right", 0 ? 1 # 0 ? 2 # 3, 3
+; EM can't parse a ?# nested between ? and # without parentheses
+CALL CHECKN, "?# in the middle, in parentheses", 1 ? (0 ? 7 # 8) # 9, 8
+CALL CHECKN, "parentheses", (1 + 2) * (3 + 4), 21
+;--- logical operators
+CALL CHECKN, "&& is 0 or 1", 5 && 7, 1
+CALL CHECKN, "|| is 0 or 1", 0 || 9, 1
+CALL CHECKN, "^^ exclusive or", (1 ^^ 0) * 10 + (3 ^^ 4), 10
+CALL CHECKN, "!& nand", (1 !& 1) * 10 + (1 !& 0), 1
+CALL CHECKN, "!| nor", (0 !| 0) * 10 + (0 !| 2), 10
+;--- && || and ?# don't evaluate what they don't need
+LX = 0
+SIF 0 && OPS_BUMP(1)
+	LX += 100
+SIF 1 || OPS_BUMP(1)
+	LX += 0
+CALL CHECKN, "&& and || short-circuit", FLAG:0, 0
+LX = 1 ? 5 # OPS_BUMP(1)
+LX = 0 ? OPS_BUMP(1) # 6
+CALL CHECKN, "?# evaluates one side", FLAG:0, 0
+LX = OPS_BUMP(1) && OPS_BUMP(2)
+CALL CHECKN, "&& evaluates the right side when needed", FLAG:0, 3
+FLAG:0 = 0
+;--- strings
+CALL CHECKS, "string +", "ab" + "cd", "abcd"
+CALL CHECKS, "string * int", "ab" * 3, "ababab"
+CALL CHECKS, "int * string", 2 * "xy", "xyxy"
+CALL CHECKS, "string * 0", "ab" * 0, ""
+CALL CHECKN, "string ==", "abc" == "abc", 1
+CALL CHECKN, "string == is case-sensitive", "abc" == "ABC", 0
+CALL CHECKN, "string !=", "a" != "b", 1
+CALL CHECKN, "string < by code unit", "abc" < "abd", 1
+CALL CHECKN, "prefix sorts first", "ab" < "abc", 1
+CALL CHECKN, "upper case before lower case", "B" < "a", 1
+CALL CHECKN, "kana after ascii", "あ" > "z", 1
+; a quirk since vanilla Emuera: for strings, >= and <= both mean < (OperatorMethod
+; GreaterEqualStrStr / LessEqualStrStr test c < 0)
+CALL CHECKN, "string >= means <", ("b" >= "a") * 100 + ("a" >= "a") * 10 + ("a" >= "b"), 1
+CALL CHECKN, "string <= means <", ("b" <= "a") * 100 + ("a" <= "a") * 10 + ("a" <= "b"), 1
+CALL CHECKS, "string ?#", 1 ? "yes" # "no", "yes"
+
+@OPS_BUMP(LN)
+#FUNCTION
+#DIM LN
+FLAG:0 += LN
+RETURNF 1

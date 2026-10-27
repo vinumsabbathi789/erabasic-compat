@@ -1,0 +1,60 @@
+﻿;=== core.console: colours, styles, alignment, the state the console reports ===
+@CORE_CONSOLE
+CALL TOPIC, "core.console"
+;--- colours (default config: text 0xC0C0C0 on 0x000000, focus 0xFFFF00)
+CALL CHECKN, "default text colour", GETDEFCOLOR(), 0xC0C0C0
+CALL CHECKN, "default background", GETDEFBGCOLOR(), 0
+CALL CHECKN, "focus colour", GETFOCUSCOLOR(), 0xFFFF00
+CALL CHECKN, "colour starts at the default", GETCOLOR(), 0xC0C0C0
+SETCOLOR 0x123456
+CALL CHECKN, "setcolor hex", GETCOLOR(), 0x123456
+SETCOLOR 1, 2, 3
+CALL CHECKN, "setcolor r, g, b", GETCOLOR(), 0x010203
+SETCOLORBYNAME Red
+CALL CHECKN, "setcolorbyname", GETCOLOR(), 0xFF0000
+RESETCOLOR
+CALL CHECKN, "resetcolor", GETCOLOR(), 0xC0C0C0
+SETBGCOLOR 0x000080
+CALL CHECKN, "setbgcolor", GETBGCOLOR(), 0x000080
+RESETBGCOLOR
+CALL CHECKN, "resetbgcolor", GETBGCOLOR(), 0
+CALL CHECKN, "color_fromname", COLOR_FROMNAME("Lime"), 0x00FF00
+CALL CHECKN, "color_fromrgb", COLOR_FROMRGB(255, 128, 1), 0xFF8001
+;--- font styles: 1 bold, 2 italic, 4 strikeout, 8 underline
+CALL CHECKN, "style starts regular", GETSTYLE(), 0
+FONTBOLD
+CALL CHECKN, "fontbold", GETSTYLE(), 1
+FONTITALIC
+CALL CHECKN, "fontitalic adds", GETSTYLE(), 3
+FONTREGULAR
+CALL CHECKN, "fontregular", GETSTYLE(), 0
+FONTSTYLE 12
+CALL CHECKN, "fontstyle", GETSTYLE(), 12
+FONTSTYLE 0
+;--- alignment
+CALL CHECKS, "align starts left", CURRENTALIGN(), "LEFT"
+ALIGNMENT CENTER
+CALL CHECKS, "alignment center", CURRENTALIGN(), "CENTER"
+ALIGNMENT RIGHT
+CALL CHECKS, "alignment right", CURRENTALIGN(), "RIGHT"
+ALIGNMENT LEFT
+;--- redraw mode
+CALL CHECKN, "redraw starts at 1", CURRENTREDRAW(), 1
+REDRAW 0
+CALL CHECKN, "redraw 0", CURRENTREDRAW(), 0
+REDRAW 1
+CALL CHECKN, "redraw 1", CURRENTREDRAW(), 1
+;--- PRINTC layout settings
+CALL CHECKN, "printcperline", PRINTCPERLINE(), 3
+CALL CHECKN, "printclength", PRINTCLENGTH(), 25
+;--- the line being printed
+PRINTL (a whole line)
+CALL CHECKN, "lineisempty after printl", LINEISEMPTY(), 1
+PRINT (part of a line)
+LOCAL = LINEISEMPTY()
+PRINTL
+CALL CHECKN, "lineisempty with text pending", LOCAL, 0
+CALL CHECKN, "isskip outside skipdisp", ISSKIP(), 0
+SKIPDISP 1
+CALL CHECKN, "isskip under skipdisp", ISSKIP(), 1
+SKIPDISP 0

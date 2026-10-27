@@ -1,0 +1,81 @@
+﻿;=== core.variables: built-in variables, default sizes, CSV names ===
+@CORE_VARIABLES
+#DIM LX
+CALL TOPIC, "core.variables"
+;--- default sizes (no VariableSize.csv)
+CALL CHECKN, "FLAG size", VARSIZE("FLAG"), 10000
+CALL CHECKN, "TFLAG size", VARSIZE("TFLAG"), 1000
+CALL CHECKN, "A size", VARSIZE("A"), 1000
+CALL CHECKN, "RESULT size", VARSIZE("RESULT"), 1000
+CALL CHECKN, "RESULTS size", VARSIZE("RESULTS"), 100
+CALL CHECKN, "STR size", VARSIZE("STR"), 20000
+CALL CHECKN, "SAVESTR size", VARSIZE("SAVESTR"), 100
+CALL CHECKN, "ITEM size", VARSIZE("ITEM"), 1000
+CALL CHECKN, "PALAMLV size", VARSIZE("PALAMLV"), 1000
+CALL CHECKN, "TALENT size", VARSIZE("TALENT"), 1000
+CALL CHECKN, "CFLAG size", VARSIZE("CFLAG"), 1000
+CALL CHECKN, "ABL size", VARSIZE("ABL"), 100
+CALL CHECKN, "CSTR size", VARSIZE("CSTR"), 100
+CALL CHECKN, "JUEL size", VARSIZE("JUEL"), 200
+CALL CHECKN, "DITEMTYPE first dimension", VARSIZE("DITEMTYPE", 0), 100
+;--- GAMEBASE.CSV
+CALL CHECKN, "gamebase code", GAMEBASE_GAMECODE, 5150
+CALL CHECKN, "gamebase version", GAMEBASE_VERSION, 1234
+CALL CHECKS, "gamebase title", GAMEBASE_TITLE, "eraBasic compatibility suite"
+CALL CHECKS, "gamebase author", GAMEBASE_AUTHOR, "emuera-tty"
+CALL CHECKS, "gamebase year", GAMEBASE_YEAR, "2026"
+;--- names from the CSV files
+CALL CHECKS, "ablname", ABLNAME:1, "技巧"
+CALL CHECKS, "talentname", TALENTNAME:10, "臆病"
+CALL CHECKS, "unnamed index is empty", TALENTNAME:5, ""
+CALL CHECKS, "flagname", FLAGNAME:5, "周回数"
+CALL CHECKS, "cflagname", CFLAGNAME:2, "好感度"
+CALL CHECKS, "basename", BASENAME:1, "気力"
+CALL CHECKS, "cstrname", CSTRNAME:0, "種族"
+CALL CHECKS, "itemname", ITEMNAME:3, "薬"
+CALL CHECKN, "itemprice", ITEMPRICE:3, 1200
+CALL CHECKN, "itemprice of another item", ITEMPRICE:1, 50
+;--- a CSV name works as an index
+FLAG:周回数 = 4
+CALL CHECKN, "csv name as index", FLAG:5, 4
+FLAG:5 = 0
+LX = 9
+FLAG:(LX) = 2
+CALL CHECKN, "parenthesised index is an expression", FLAG:最後, 2
+FLAG:9 = 0
+;--- variables start at 0 / ""
+CALL CHECKN, "fresh integer", A:500, 0
+CALL CHECKS, "fresh string", STR:500, ""
+;--- single-letter variables A..Z are arrays
+A = 1
+A:1 = 2
+Z:999 = 3
+CALL CHECKN, "A is A:0", A:0 + A:1 + Z:999, 6
+A = 0
+A:1 = 0
+Z:999 = 0
+;--- RAND bounds that leave one choice are deterministic
+CALL CHECKN, "rand:1", RAND:1, 0
+CALL CHECKN, "rand(1)", RAND(1), 0
+CALL CHECKN, "rand(5, 6)", RAND(5, 6), 5
+LX = 0
+FOR LOCAL, 0, 200
+	SIF RAND(10) < 0 || RAND(10) >= 10
+		LX += 1
+NEXT
+CALL CHECKN, "rand stays in range", LX, 0
+;--- DAY, TIME, MONEY are ordinary variables that start at 0
+CALL CHECKN, "day time money start at 0", DAY + TIME + MONEY, 0
+;--- CHARANUM, MASTER, TARGET, ASSI before any character exists
+CALL CHECKN, "no characters yet", CHARANUM, 0
+CALL CHECKN, "master starts at 0", MASTER, 0
+CALL CHECKN, "target starts at 1", TARGET, 1
+CALL CHECKN, "assi starts at -1", ASSI, -1
+CALL CHECKN, "ejac starts at 10000", EJAC, 10000
+CALL CHECKN, "palamlv defaults", PALAMLV:1 * 1000000 + PALAMLV:9, 100250000
+CALL CHECKN, "explv defaults", EXPLV:2 * 1000 + EXPLV:5, 4200
+;--- LINECOUNT counts printed lines
+LX = LINECOUNT
+PRINTL (two lines from core.variables)
+PRINTL
+CALL CHECKN, "linecount", LINECOUNT - LX, 2

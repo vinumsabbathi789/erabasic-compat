@@ -1,0 +1,36 @@
+﻿;=== core.form: FORM strings (%..%, {..}, \@..\@, widths, escapes) ===
+@CORE_FORM
+#DIM LX
+#DIMS LS
+CALL TOPIC, "core.form"
+LX = 7
+LS = cat
+;--- @"..." is a FORM string literal
+CALL CHECKS, "string variable", @"[%LS%]", "[cat]"
+CALL CHECKS, "integer expression", @"[{LX * 2}]", "[14]"
+CALL CHECKS, "string expression", @"[%LS + "s"%]", "[cats]"
+CALL CHECKS, "function call", @"[%TOUPPER(LS)%]", "[CAT]"
+;--- widths: {expr, width} right-aligns, %str, width% left-aligns, LEFT/RIGHT choose
+CALL CHECKS, "integer width right-aligns", @"[{LX, 3}]", "[  7]"
+CALL CHECKS, "integer width LEFT", @"[{LX, 3, LEFT}]", "[7  ]"
+CALL CHECKS, "string width right-aligns", @"[%LS, 5%]", "[  cat]"
+CALL CHECKS, "string width LEFT", @"[%LS, 5, LEFT%]", "[cat  ]"
+CALL CHECKS, "string width RIGHT", @"[%LS, 5, RIGHT%]", "[  cat]"
+CALL CHECKS, "width counts bytes", @"[%"あ", 4%]", "[  あ]"
+CALL CHECKS, "text longer than the width is kept", @"[%"abcdef", 3%]", "[abcdef]"
+;--- \@ cond ? a # b \@
+CALL CHECKS, "ternary true", @"\@ LX > 5 ? big # small \@", "big"
+CALL CHECKS, "ternary false", @"\@ LX > 50 ? big # small \@", "small"
+CALL CHECKS, "ternary with a form inside", @"\@ LX ? %LS% # none \@!", "cat!"
+CALL CHECKS, "ternary operator in braces", @"{LX > 5 ? 1 # 0}", "1"
+;--- escapes
+CALL CHECKS, "escaped percent", @"100\%", "100%"
+CALL CHECKS, "escaped braces", @"\{x\}", "{x}"
+CALL CHECKS, "plain string unchanged", @"no formatting", "no formatting"
+;--- FORM text in assignments and arguments
+LS = <%"a" + "b"%>{1}
+CALL CHECKS, "form in a string assignment", LS, "<ab>1"
+LS =
+CALL CHECKS, "form with only spaces after =", LS, ""
+;--- nesting
+CALL CHECKS, "nested form strings", @"%@"{LX}"%", "7"

@@ -1,0 +1,260 @@
+﻿;=== core.flow: IF, SELECTCASE, loops, BREAK/CONTINUE, TRY..., JUMP ===
+@CORE_FLOW
+#DIM LX
+#DIM LI
+#DIM LJ
+#DIMS LS
+CALL TOPIC, "core.flow"
+;--- IF / ELSEIF / ELSE take the first true branch
+LX = 0
+IF 0
+	LX = 1
+ELSEIF 2
+	LX = 2
+ELSEIF 3
+	LX = 3
+ELSE
+	LX = 4
+ENDIF
+CALL CHECKN, "elseif takes the first true branch", LX, 2
+IF 0
+	LX = 1
+ELSE
+	LX = 9
+ENDIF
+CALL CHECKN, "else", LX, 9
+;--- SIF guards only the next line
+LX = 0
+SIF 0
+	LX = 1
+LX += 10
+CALL CHECKN, "sif skips one line", LX, 10
+;--- SELECTCASE
+CALL CHECKS, "case value list", FLOW_SEL(3), "small"
+CALL CHECKS, "case range", FLOW_SEL(15), "teen"
+CALL CHECKS, "case range ends are inclusive", FLOW_SEL(19), "teen"
+CALL CHECKS, "case is", FLOW_SEL(100), "big"
+CALL CHECKS, "case else", FLOW_SEL(-5), "other"
+CALL CHECKS, "first matching case wins", FLOW_SEL(50), "fifty"
+CALL CHECKS, "case strings", FLOW_SELS("ワイン"), "drink"
+CALL CHECKS, "case string range", FLOW_SELS("beta"), "b-word"
+CALL CHECKS, "case is with strings", FLOW_SELS("zz"), "late"
+CALL CHECKS, "no case matches", FLOW_SELS("???"), "none"
+;--- FOR: end and step are read once; the counter is left one step past
+LX = 0
+FOR LI, 0, 5
+	LX += LI
+NEXT
+CALL CHECKN, "for sums 0..4", LX, 10
+CALL CHECKN, "for leaves the counter at the end", LI, 5
+LX = 0
+FOR LI, 10, 0, -3
+	LX += 1
+NEXT
+CALL CHECKN, "for with a negative step", LX * 100 + LI, 398
+LX = 0
+FOR LI, 5, 5
+	LX += 1
+NEXT
+CALL CHECKN, "for that never runs", LX * 100 + LI, 5
+LJ = 3
+LX = 0
+FOR LI, 0, LJ
+	LJ = 10
+	LX += 1
+NEXT
+CALL CHECKN, "for reads the end once", LX, 3
+LX = 0
+FOR LI, 0, 10
+	SIF LI == 3
+		CONTINUE
+	SIF LI == 6
+		BREAK
+	LX += LI
+NEXT
+; BREAK steps the counter before it leaves, as eramaker did (BREAK_Instruction)
+CALL CHECKN, "for continue and break, break steps the counter", LX * 100 + LI, 1207
+;--- nested loops: BREAK leaves only the innermost
+LX = 0
+FOR LI, 0, 3
+	FOR LJ, 0, 3
+		SIF LJ == 1
+			BREAK
+		LX += 1
+	NEXT
+NEXT
+CALL CHECKN, "break leaves the inner loop", LX, 3
+;--- BREAK inside SELECTCASE leaves the loop around it
+LX = 0
+FOR LI, 0, 10
+	SELECTCASE LI
+		CASE 4
+			BREAK
+	ENDSELECT
+	LX += 1
+NEXT
+CALL CHECKN, "break inside selectcase", LX * 100 + LI, 405
+;--- WHILE, DO..LOOP, REPEAT
+LX = 0
+WHILE LX < 5
+	LX += 2
+WEND
+CALL CHECKN, "while", LX, 6
+LX = 0
+WHILE 0
+	LX = 1
+WEND
+CALL CHECKN, "while that never runs", LX, 0
+LX = 0
+DO
+	LX += 1
+LOOP LX < 3
+CALL CHECKN, "do loop", LX, 3
+LX = 0
+DO
+	LX += 1
+LOOP 0
+CALL CHECKN, "do runs at least once", LX, 1
+LX = 0
+REPEAT 4
+	LX += COUNT
+REND
+CALL CHECKN, "repeat with count", LX * 10 + COUNT, 64
+LX = 0
+REPEAT 0
+	LX += 1
+REND
+CALL CHECKN, "repeat 0", LX, 0
+LX = 0
+WHILE 1
+	LX += 1
+	SIF LX < 5
+		CONTINUE
+	BREAK
+WEND
+CALL CHECKN, "while continue and break", LX, 5
+;--- GOTO out of a loop
+LX = 0
+FOR LI, 0, 10
+	SIF LI == 2
+		GOTO OUT_OF_FOR
+	LX += 1
+NEXT
+$OUT_OF_FOR
+CALL CHECKN, "goto out of a loop", LX * 100 + LI, 202
+;--- TRYGOTO, TRYCALL and TRYJUMP of missing targets do nothing
+LX = 0
+TRYGOTO NO_SUCH_LABEL
+LX = 1
+CALL CHECKN, "trygoto of a missing label", LX, 1
+TRYCALL NO_SUCH_FUNCTION
+CALL CHECKN, "trycall of a missing function", LX, 1
+TRYJUMP NO_SUCH_FUNCTION
+CALL CHECKN, "tryjump of a missing function", LX, 1
+;--- TRYC... CATCH runs one branch
+LX = 0
+TRYCCALL FLOW_SET_FLAG
+	LX = 1
+CATCH
+	LX = 2
+ENDCATCH
+CALL CHECKN, "tryccall that exists runs the first branch", LX * 10 + FLAG:1, 11
+FLAG:1 = 0
+TRYCCALL NO_SUCH_FUNCTION
+	LX = 1
+CATCH
+	LX = 2
+ENDCATCH
+CALL CHECKN, "tryccall that doesn't runs catch", LX, 2
+; a quirk: with a constant label that doesn't exist, TRYCGOTO doesn't jump at all
+; (GOTO_Instruction leaves JumpTo null and DoInstruction returns), so the first
+; branch runs and CATCH skips to ENDCATCH
+TRYCGOTO NO_SUCH_LABEL
+	LX = 3
+CATCH
+	LX = 4
+ENDCATCH
+CALL CHECKN, "trycgoto of a missing constant label runs the first branch", LX, 3
+;--- CALLFORM / TRYCALLFORM / GOTOFORM build the name
+CALLFORM FLOW_NAMED_{2}
+CALL CHECKN, "callform", RESULT, 2
+LS = 3
+CALLFORM FLOW_NAMED_%LS%
+CALL CHECKN, "callform with a string", RESULT, 3
+LX = 0
+GOTOFORM FLOW_LABEL_{1 + 1}
+LX = 1
+$FLOW_LABEL_2
+CALL CHECKN, "gotoform", LX, 0
+RESULT = 3
+TRYCALLFORM FLOW_NAMED_{99}
+CALL CHECKN, "trycallform of a missing function", RESULT, 3
+;--- TRYCALLLIST calls the first that exists
+TRYCALLLIST
+	FUNC NO_SUCH_FUNCTION
+	FUNC FLOW_NAMED_2
+	FUNC FLOW_NAMED_3
+ENDFUNC
+CALL CHECKN, "trycalllist", RESULT, 2
+;--- JUMP: the jumped-to function returns to our caller
+CALL FLOW_JUMPER
+CALL CHECKN, "jump returns to the caller's caller", RESULT * 10 + FLAG:1, 51
+FLAG:1 = 0
+;--- RESTART runs the function again from the top
+FLAG:2 = 0
+CALL FLOW_RESTARTS
+CALL CHECKN, "restart", FLAG:2, 3
+FLAG:2 = 0
+
+@FLOW_SEL(LX)
+#FUNCTIONS
+#DIM LX
+SELECTCASE LX
+	CASE 1, 2, 3
+		RETURNF "small"
+	CASE 13 TO 19
+		RETURNF "teen"
+	CASE 50
+		RETURNF "fifty"
+	CASE IS >= 50
+		RETURNF "big"
+	CASEELSE
+		RETURNF "other"
+ENDSELECT
+
+@FLOW_SELS(LS)
+#FUNCTIONS
+#DIMS LS
+SELECTCASE LS
+	CASE "食べ物"
+		RETURNF "food"
+	CASE "お酒", "ワイン"
+		RETURNF "drink"
+	CASE "b" TO "c"
+		RETURNF "b-word"
+	CASE IS > "y"
+		RETURNF "late"
+ENDSELECT
+RETURNF "none"
+
+@FLOW_SET_FLAG
+FLAG:1 = 1
+
+@FLOW_NAMED_2
+RETURN 2
+
+@FLOW_NAMED_3
+RETURN 3
+
+@FLOW_JUMPER
+FLAG:1 = 1
+JUMP FLOW_JUMPED
+FLAG:1 = 2
+
+@FLOW_JUMPED
+RETURN 5
+
+@FLOW_RESTARTS
+FLAG:2 += 1
+SIF FLAG:2 < 3
+	RESTART

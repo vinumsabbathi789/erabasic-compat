@@ -1,0 +1,78 @@
+﻿;=== core.strings: lengths in Shift_JIS bytes and in characters, search, conversion ===
+@CORE_STRINGS
+#DIMS PARTS, 10
+CALL TOPIC, "core.strings"
+;--- lengths: STRLENS counts Shift_JIS bytes, STRLENSU characters
+CALL CHECKN, "strlens ascii", STRLENS("abc"), 3
+CALL CHECKN, "strlens kana is 2 bytes", STRLENS("あいu"), 5
+CALL CHECKN, "strlens half-width kana is 1 byte", STRLENS("ｱｲ"), 2
+CALL CHECKN, "strlensu", STRLENSU("あいu"), 3
+CALL CHECKN, "strlens empty", STRLENS(""), 0
+STRLEN あいう
+CALL CHECKN, "strlen statement sets RESULT", RESULT, 6
+STRLENU あいう
+CALL CHECKN, "strlenu statement", RESULT, 3
+STRLENFORM %"ab" * 2%{12}
+CALL CHECKN, "strlenform", RESULT, 6
+;--- SUBSTRING counts bytes, SUBSTRINGU characters; a negative length runs to the end
+CALL CHECKS, "substring", SUBSTRING("abcdef", 2, 3), "cde"
+CALL CHECKS, "substring to the end", SUBSTRING("abcdef", 2), "cdef"
+CALL CHECKS, "substring negative length", SUBSTRING("abcdef", 4, -1), "ef"
+CALL CHECKS, "substring by bytes", SUBSTRING("あいうえお", 2, 4), "いう"
+CALL CHECKS, "substringu by characters", SUBSTRINGU("あいうえお", 1, 2), "いう"
+CALL CHECKS, "substring past the end", SUBSTRING("abc", 5, 2), ""
+;--- STRFIND gives a byte index, STRFINDU a character index, -1 if missing
+CALL CHECKN, "strfind", STRFIND("abcabc", "c"), 2
+CALL CHECKN, "strfind from an index", STRFIND("abcabc", "c", 3), 5
+CALL CHECKN, "strfind missing", STRFIND("abc", "z"), -1
+CALL CHECKN, "strfind by bytes", STRFIND("あいう", "う"), 4
+CALL CHECKN, "strfindu by characters", STRFINDU("あいう", "う"), 2
+CALL CHECKN, "strfind is not a regex", STRFIND("a.c", "."), 1
+;--- STRCOUNT and REPLACE use regular expressions
+CALL CHECKN, "strcount", STRCOUNT("abcabc", "bc"), 2
+CALL CHECKN, "strcount regex", STRCOUNT("a1b22c333", "[0-9]+"), 3
+CALL CHECKS, "replace regex", REPLACE("a1b22c", "[0-9]+", "#"), "a#b#c"
+CALL CHECKS, "replace all occurrences", REPLACE("aaa", "a", "b"), "bbb"
+CALL CHECKS, "escape", ESCAPE("a.b*c"), "a\\.b\\*c"
+CALL CHECKN, "escaped text counts literally", STRCOUNT("1+1=2, 1+1", ESCAPE("1+1")), 2
+;--- SPLIT
+SPLIT "a,b,,c", ",", PARTS
+CALL CHECKN, "split count in RESULT", RESULT, 4
+CALL CHECKS, "split parts", PARTS:0 + "|" + PARTS:1 + "|" + PARTS:2 + "|" + PARTS:3, "a|b||c"
+SPLIT "x::y", "::", PARTS
+CALL CHECKS, "split on a longer separator", PARTS:0 + PARTS:1, "xy"
+CALL CHECKS, "strjoin", STRJOIN(PARTS, "-", 0, 2), "x-y"
+;--- case and width
+CALL CHECKS, "toupper", TOUPPER("aBc1"), "ABC1"
+CALL CHECKS, "tolower", TOLOWER("AbC1"), "abc1"
+CALL CHECKS, "tohalf", TOHALF("ＡＢ１　"), "AB1 "
+CALL CHECKS, "tofull", TOFULL("ab1"), "ａｂ１"
+;--- numbers and strings
+CALL CHECKN, "isnumeric negative", ISNUMERIC("-12"), 1
+CALL CHECKN, "isnumeric rejects text", ISNUMERIC("1a"), 0
+CALL CHECKN, "toint", TOINT("42"), 42
+CALL CHECKN, "toint negative", TOINT("-7"), -7
+CALL CHECKN, "toint of text is 0", TOINT("abc"), 0
+CALL CHECKS, "tostr", TOSTR(-5), "-5"
+CALL CHECKS, "tostr zero padding", TOSTR(42, "0000"), "0042"
+CALL CHECKS, "tostr hex", TOSTR(255, "X4"), "00FF"
+CALL CHECKS, "tostr thousands", TOSTR(1234567, "#,0"), "1,234,567"
+CALL CHECKS, "convert to base 16", CONVERT(255, 16), "ff"
+CALL CHECKS, "convert to base 2", CONVERT(5, 2), "101"
+CALL CHECKS, "moneystr", MONEYSTR(100), "$100"
+CALL CHECKS, "moneystr with a format", MONEYSTR(1234, "#,0"), "$1,234"
+CALL CHECKS, "barstr", BARSTR(3, 10, 5), "[*....]"
+CALL CHECKS, "barstr full", BARSTR(20, 10, 4), "[****]"
+;--- characters and code points
+CALL CHECKS, "unicode", UNICODE(65) + UNICODE(0x3042), "Aあ"
+CALL CHECKN, "encodetouni", ENCODETOUNI("A"), 65
+CALL CHECKN, "encodetouni at a position", ENCODETOUNI("あい", 1), 0x3044
+CALL CHECKS, "charatu", CHARATU("あいう", 1), "い"
+;--- STRFORM evaluates FORM text at run time
+CALL CHECKS, "strform", STRFORM("{1 + 1}%\"x\"%"), "2x"
+;--- HTML helpers
+CALL CHECKS, "html_escape", HTML_ESCAPE("<a&b>"), "&lt;a&amp;b&gt;"
+CALL CHECKS, "html_toplaintext", HTML_TOPLAINTEXT("<b>bold</b> text"), "bold text"
+;--- GETNUM finds a CSV name's index
+CALL CHECKN, "getnum", GETNUM(ABL, "技巧"), 1
+CALL CHECKN, "getnum missing", GETNUM(ABL, "nothing"), -1

@@ -1,0 +1,35 @@
+﻿;=== core.header: #DEFINE and global #DIM from COMPAT.ERH ===
+@CORE_HEADER
+CALL TOPIC, "core.header"
+;--- #DEFINE replaces tokens, it doesn't evaluate
+CALL CHECKN, "define a number", HDR_TEN, 10
+CALL CHECKN, "define in an expression", HDR_TEN * 2 + 1, 21
+CALL CHECKN, "define with parentheses", HDR_PAREN * 2, 10
+CALL CHECKN, "define without parentheses is textual", HDR_BARE * 2, 8
+CALL CHECKS, "define a string", HDR_NAME, "macro text"
+;--- CONST
+CALL CHECKN, "const", HDR_CONST, 7
+CALL CHECKN, "const array", HDR_CONSTS:0 + HDR_CONSTS:1 + HDR_CONSTS:2, 7
+CALL CHECKS, "const string", HDR_CONSTSTR, "fixed"
+;--- initialisers fill from element 0, the rest stay 0
+CALL CHECKN, "initialiser 0", HDR_INIT:0, 9
+CALL CHECKN, "initialiser 2", HDR_INIT:2, 7
+CALL CHECKN, "initialiser leaves the rest 0", HDR_INIT:3, 0
+CALL CHECKS, "string initialiser", HDR_INITS:0 + HDR_INITS:1, "ab"
+;--- sizes
+CALL CHECKN, "varsize 1-d", VARSIZE("HDR_INIT"), 4
+CALL CHECKN, "varsize 2-d first dimension", VARSIZE("HDR_GRID", 0), 3
+CALL CHECKN, "varsize 2-d second dimension", VARSIZE("HDR_GRID", 1), 4
+CALL CHECKN, "varsize 3-d last dimension", VARSIZE("HDR_CUBE", 2), 4
+;--- multi-dimensional arrays are independent cells
+HDR_GRID:1:2 = 5
+HDR_GRID:2:1 = 6
+CALL CHECKN, "2-d cell", HDR_GRID:1:2, 5
+CALL CHECKN, "2-d other cell untouched", HDR_GRID:2:2, 0
+HDR_CUBE:1:2:3 = 42
+CALL CHECKN, "3-d cell", HDR_CUBE:1:2:3, 42
+CALL CHECKN, "3-d neighbour untouched", HDR_CUBE:1:2:2, 0
+;--- SAVEDATA and GLOBAL variables are ordinary variables while running
+HDR_SAVED = 3
+HDR_GLOBAL = 4
+CALL CHECKN, "savedata variable", HDR_SAVED + HDR_GLOBAL, 7

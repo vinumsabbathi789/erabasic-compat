@@ -1,0 +1,30 @@
+﻿;=== em.datatable: Emuera-EM data tables (DT_*) ===
+@EM_DATATABLE
+#DIM R1
+#DIM R2
+CALL TOPIC, "em.datatable"
+CALL CHECKN, "dt_create", DT_CREATE("ct"), 1
+CALL CHECKN, "dt_exist", DT_EXIST("ct") * 10 + DT_EXIST("notable"), 10
+DT_COLUMN_ADD "ct", "name", "string"
+DT_COLUMN_ADD "ct", "age", "int64"
+CALL CHECKN, "dt_column_exist", DT_COLUMN_EXIST("ct", "age") != 0, 1
+CALL CHECKN, "dt_column_exist missing", DT_COLUMN_EXIST("ct", "nothing"), 0
+R1 = DT_ROW_ADD("ct", "name", "reimu", "age", 17)
+R2 = DT_ROW_ADD("ct", "name", "marisa", "age", 18)
+CALL CHECKN, "dt_row_length", DT_ROW_LENGTH("ct"), 2
+CALL CHECKS, "dt_cell_gets by id", DT_CELL_GETS("ct", R1, "name", 1), "reimu"
+CALL CHECKN, "dt_cell_get by id", DT_CELL_GET("ct", R2, "age", 1), 18
+CALL CHECKS, "dt_cell_gets by row index", DT_CELL_GETS("ct", 1, "name"), "marisa"
+DT_ROW_SET "ct", R2, "age", 19
+CALL CHECKN, "dt_row_set", DT_CELL_GET("ct", R2, "age", 1), 19
+DT_CELL_SET "ct", R1, "age", 20, 1
+CALL CHECKN, "dt_cell_set", DT_CELL_GET("ct", R1, "age", 1), 20
+CALL CHECKN, "dt_select counts rows", DT_SELECT("ct", "age > 19"), 1
+DT_ROW_REMOVE "ct", R1
+CALL CHECKN, "dt_row_remove", DT_ROW_LENGTH("ct"), 1
+DT_COLUMN_REMOVE "ct", "age"
+CALL CHECKN, "dt_column_remove", DT_COLUMN_EXIST("ct", "age"), 0
+DT_CLEAR "ct"
+CALL CHECKN, "dt_clear", DT_ROW_LENGTH("ct"), 0
+DT_RELEASE "ct"
+CALL CHECKN, "dt_release", DT_EXIST("ct"), 0

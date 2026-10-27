@@ -1,0 +1,93 @@
+﻿;=== eraBasic compatibility suite: the runner and the check helpers ===
+;
+; Runs every topic, prints one line per check ("OK  topic: what" or
+; "NG  topic: what  got [..] want [..]"), then the totals and the failed
+; checks again. The expected values are Emuera-EM/EE's (default config).
+;
+; Topics named core.* use only what vanilla Emuera (1821+) has. Topics
+; named em.* use Emuera-EM/EE extensions; they live in EM_*.ERB and are
+; called with TRYCALL, so an interpreter without them can delete those
+; files and still run the core topics (they're reported as skipped).
+
+@SYSTEM_TITLE
+PRINTL eraBasic compatibility suite
+PRINTL
+CALL CORE_HEADER
+CALL CORE_SYNTAX
+CALL CORE_OPERATORS
+CALL CORE_FLOW
+CALL CORE_FUNCTIONS
+CALL CORE_VARIABLES
+CALL CORE_ARRAYS
+CALL CORE_STRINGS
+CALL CORE_FORM
+CALL CORE_MATH
+CALL CORE_CHARA
+CALL CORE_CONSOLE
+CALL COMPAT_OPTIONAL, "em.functions"
+TRYCALL EM_FUNCTIONS
+CALL COMPAT_OPTIONAL, "em.maps"
+TRYCALL EM_MAPS
+CALL COMPAT_OPTIONAL, "em.xml"
+TRYCALL EM_XML
+CALL COMPAT_OPTIONAL, "em.datatable"
+TRYCALL EM_DATATABLE
+CALL COMPAT_OPTIONAL, ""
+CALL COMPAT_SUMMARY
+; (the screen to emuera.log beside the exe)
+OUTPUTLOG
+WAIT
+QUIT
+
+; Start a topic: its name prefixes every check it prints.
+@TOPIC, ARGS
+COMPAT_TOPIC = %ARGS%
+COMPAT_RAN = 1
+
+; Before an optional topic: report the previous one if it didn't run.
+@COMPAT_OPTIONAL, ARGS
+SIF COMPAT_RAN == 0 && COMPAT_TOPIC != ""
+	PRINTFORML SKIP %COMPAT_TOPIC% (not present)
+COMPAT_TOPIC = %ARGS%
+COMPAT_RAN = 0
+
+@COMPAT_SUMMARY
+#DIM LI
+PRINTL
+PRINTFORML == {COMPAT_PASS + COMPAT_FAIL} checks: {COMPAT_PASS} passed, {COMPAT_FAIL} failed ==
+FOR LI, 0, COMPAT_FAIL
+	SIF LI >= VARSIZE("COMPAT_FAILED")
+		BREAK
+	PRINTFORML NG  %COMPAT_FAILED:LI%
+NEXT
+
+@COMPAT_RESULT, ARGS, ARG
+IF ARG
+	COMPAT_PASS += 1
+	PRINTFORML OK  %COMPAT_TOPIC%: %ARGS%
+ELSE
+	SIF COMPAT_FAIL < VARSIZE("COMPAT_FAILED")
+		COMPAT_FAILED:COMPAT_FAIL = %COMPAT_TOPIC%: %ARGS%
+	COMPAT_FAIL += 1
+	PRINTFORML NG  %COMPAT_TOPIC%: %ARGS%
+ENDIF
+
+; CALL CHECK, "what", <condition>
+@CHECK, ARGS, ARG
+CALL COMPAT_RESULT, ARGS, ARG != 0
+
+; CALL CHECKN, "what", <got>, <want>   (integers)
+@CHECKN, ARGS, ARG, ARG:1
+IF ARG == ARG:1
+	CALL COMPAT_RESULT, ARGS, 1
+ELSE
+	CALL COMPAT_RESULT, @"%ARGS%  got [{ARG}] want [{ARG:1}]", 0
+ENDIF
+
+; CALL CHECKS, "what", <got>, <want>   (strings)
+@CHECKS, ARGS, ARGS:1, ARGS:2
+IF ARGS:1 == ARGS:2
+	CALL COMPAT_RESULT, ARGS, 1
+ELSE
+	CALL COMPAT_RESULT, @"%ARGS%  got [%ARGS:1%] want [%ARGS:2%]", 0
+ENDIF

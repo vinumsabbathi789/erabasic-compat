@@ -1,0 +1,88 @@
+﻿;=== core.chara: characters from CHARA*.CSV and the character statements ===
+; CSV: NO 0 主人, NO 1 アリス (好感度 25), NO 2 ボブ (好感度 -5), NO 7 セブン (好感度 7)
+@CORE_CHARA
+#DIM LX
+CALL TOPIC, "core.chara"
+DELALLCHARA
+;--- CSV data without adding anyone
+CALL CHECKN, "existcsv", EXISTCSV(7) * 10 + EXISTCSV(5), 10
+CALL CHECKS, "csvname", CSVNAME(1), "アリス"
+CALL CHECKS, "csvcallname", CSVCALLNAME(1), "アリ"
+CALL CHECKS, "csvnickname", CSVNICKNAME(1), "人形遣い"
+CALL CHECKN, "csvbase", CSVBASE(1, 0), 1500
+CALL CHECKN, "csvabl", CSVABL(2, 1), 7
+CALL CHECKN, "csvtalent", CSVTALENT(1, 10), 1
+CALL CHECKN, "csvcflag negative", CSVCFLAG(2, 2), -5
+CALL CHECKS, "csvcstr", CSVCSTR(1, 0), "ドール"
+;--- ADDCHARA copies the CSV template to the end of the list
+ADDCHARA 0
+ADDCHARA 1
+ADDCHARA 2, 7
+CALL CHECKN, "charanum", CHARANUM, 4
+CALL CHECKN, "no", NO:0 * 1000 + NO:1 * 100 + NO:2 * 10 + NO:3, 127
+CALL CHECKS, "name", NAME:1, "アリス"
+CALL CHECKS, "callname", CALLNAME:1, "アリ"
+CALL CHECKS, "nickname", NICKNAME:1, "人形遣い"
+CALL CHECKN, "base", BASE:1:0, 1500
+CALL CHECKN, "base by csv name", BASE:1:気力, 800
+CALL CHECKN, "maxbase is set from base", MAXBASE:1:体力, 1500
+CALL CHECKN, "abl", ABL:2:技巧, 7
+CALL CHECKN, "talent", TALENT:1:臆病, 1
+CALL CHECKN, "talent not in the csv", TALENT:2:臆病, 0
+CALL CHECKN, "cflag", CFLAG:1:好感度, 25
+CALL CHECKS, "cstr", CSTR:1:0, "ドール"
+;--- without a character index, character variables mean TARGET's
+TARGET = 2
+CALL CHECKS, "name means target's name", NAME, "ボブ"
+CALL CHECKN, "cflag:n means target's", CFLAG:好感度, -5
+CFLAG:3 = 33
+CALL CHECKN, "writing without an index writes target's", CFLAG:2:3, 33
+;--- character variables are per character
+CFLAG:0:好感度 = 100
+CALL CHECKN, "per character", CFLAG:0:好感度 * 1000 + CFLAG:1:好感度, 100025
+;--- GETCHARA / FINDCHARA / FINDLASTCHARA
+CALL CHECKN, "getchara by number", GETCHARA(7), 3
+CALL CHECKN, "getchara missing", GETCHARA(5), -1
+CALL CHECKN, "findchara by cflag", FINDCHARA(CFLAG:好感度, 25), 1
+CALL CHECKN, "findchara by name", FINDCHARA(NAME, "ボブ"), 2
+CALL CHECKN, "findchara missing", FINDCHARA(NO, 99), -1
+ADDCHARA 1
+CALL CHECKN, "findchara first", FINDCHARA(NO, 1), 1
+CALL CHECKN, "findlastchara", FINDLASTCHARA(NO, 1), 4
+CALL CHECKN, "findchara from an index", FINDCHARA(NO, 1, 2), 4
+;--- DELCHARA closes the gap
+DELCHARA 4
+DELCHARA 1
+CALL CHECKN, "delchara", CHARANUM * 1000 + NO:0 * 100 + NO:1 * 10 + NO:2, 3027
+;--- SWAPCHARA
+SWAPCHARA 1, 2
+CALL CHECKN, "swapchara", NO:1 * 10 + NO:2, 72
+;--- SORTCHARA keeps MASTER where it is, TARGET follows its character
+ADDCHARA 1
+MASTER = 0
+TARGET = 2
+SORTCHARA CFLAG:好感度, FORWARD
+CALL CHECKN, "sortchara forward", NO:0 * 1000 + NO:1 * 100 + NO:2 * 10 + NO:3, 271
+CALL CHECKN, "target follows its character", NO:TARGET, 2
+SORTCHARA NO, BACK
+CALL CHECKN, "sortchara back", NO:0 * 1000 + NO:1 * 100 + NO:2 * 10 + NO:3, 721
+SORTCHARA
+CALL CHECKN, "sortchara by NO forward", NO:0 * 1000 + NO:1 * 100 + NO:2 * 10 + NO:3, 127
+;--- ADDVOIDCHARA, COPYCHARA, ADDCOPYCHARA
+ADDVOIDCHARA
+LX = CHARANUM - 1
+CALL CHECKS, "addvoidchara has no name", NAME:LX, ""
+CALL CHECKN, "addvoidchara cflag is 0", CFLAG:LX:好感度, 0
+COPYCHARA 1, LX
+CALL CHECKN, "copychara", NO:LX * 100 + CFLAG:LX:好感度, 125
+ADDCOPYCHARA 2
+CALL CHECKN, "addcopychara", CHARANUM * 10 + NO:(CHARANUM - 1), 62
+;--- PICKUPCHARA keeps the listed characters, in that order
+PICKUPCHARA 0, 3
+CALL CHECKN, "pickupchara", CHARANUM * 100 + NO:0 * 10 + NO:1, 207
+;--- DELALLCHARA
+DELALLCHARA
+CALL CHECKN, "delallchara", CHARANUM, 0
+MASTER = 0
+TARGET = 1
+ASSI = -1

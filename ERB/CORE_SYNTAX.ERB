@@ -1,0 +1,121 @@
+﻿;=== core.syntax: lines, comments, literals, assignment forms ===
+@CORE_SYNTAX
+#DIM LX
+#DIM LY
+#DIM ARR, 6
+#DIMS LS
+#DIMS SA, 4
+CALL TOPIC, "core.syntax"
+;--- a comment after a statement
+LX = 1 ; a comment
+CALL CHECKN, "comment after an expression", LX, 1
+;--- { } joins lines into one
+{
+LX = 1
+	+ 2
+	+ 3
+}
+CALL CHECKN, "brace continuation", LX, 6
+;--- [SKIPSTART] .. [SKIPEND] lines are never parsed
+LX = 0
+[SKIPSTART]
+LX = this would not parse (
+[SKIPEND]
+CALL CHECKN, "skipstart", LX, 0
+;--- [IF_DEBUG] runs only in debug mode, [IF_NDEBUG] only outside it
+LX = 0
+[IF_DEBUG]
+LX += 1
+[ENDIF]
+[IF_NDEBUG]
+LX += 10
+[ENDIF]
+CALL CHECKN, "if_ndebug outside debug mode", LX, 10
+;--- names are not case-sensitive
+lx = 4
+CALL CHECKN, "variable names ignore case", LX, 4
+CALL core_syntax_lower
+CALL CHECKN, "function names ignore case", RESULT, 77
+;--- a full-width space is whitespace
+LX　=　3
+CALL CHECKN, "full-width space", LX, 3
+;--- numeric literals
+CALL CHECKN, "hex literal", 0x1F, 31
+CALL CHECKN, "hex literal, upper case", 0XfF, 255
+CALL CHECKN, "binary literal", 0b1011, 11
+CALL CHECKN, "e exponent", 3e2, 300
+CALL CHECKN, "p exponent (power of 2)", 3p4, 48
+CALL CHECKN, "leading zeros are decimal", 010, 10
+CALL CHECKN, "largest literal", 9223372036854775807 > 0, 1
+;--- string literals
+CALL CHECKN, "escaped quote", STRLENS("a\"b"), 3
+CALL CHECKN, "escaped backslash", STRLENS("a\\b"), 3
+CALL CHECKS, "empty string literal", "", ""
+;--- integer assignment forms
+LX = 5
+LX += 3
+LX -= 1
+LX *= 6
+LX /= 4
+LX %= 4
+CALL CHECKN, "arithmetic compound assignment", LX, 2
+LX |= 5
+LX &= 6
+LX ^= 3
+CALL CHECKN, "bitwise compound assignment", LX, 5
+LX <<= 2
+LX >>= 1
+CALL CHECKN, "shift compound assignment", LX, 10
+LX ++
+LX ++
+LX --
+CALL CHECKN, "statement ++ and --", LX, 11
+LX = 7
+LY = LX++
+CALL CHECKN, "postfix ++ gives the old value", LY * 100 + LX, 708
+LY = ++LX
+CALL CHECKN, "prefix ++ gives the new value", LY * 100 + LX, 909
+LY = LX--
+LY = --LX
+CALL CHECKN, "postfix and prefix --", LY * 100 + LX, 707
+;--- a list of values fills consecutive elements
+ARR = 1, 2, 3
+CALL CHECKN, "list assignment from 0", ARR:0 * 100 + ARR:1 * 10 + ARR:2, 123
+ARR:3 = 7, 8
+CALL CHECKN, "list assignment from an index", ARR:3 * 10 + ARR:4, 78
+;--- string assignment: = takes FORM text, '= an expression
+LS = plain text %"x"% {1 + 1}
+CALL CHECKS, "string = is FORM text", LS, "plain text x 2"
+LS = "quotes are kept"
+CALL CHECKS, "string = keeps quotes", LS, "\"quotes are kept\""
+LS '= "quoted" + "joined"
+CALL CHECKS, "string '= is an expression", LS, "quotedjoined"
+LS += "+more"
+CALL CHECKS, "string += is an expression", LS, "quotedjoined+more"
+LS '= "ab"
+LS *= 3
+CALL CHECKS, "string *= repeats", LS, "ababab"
+SA '= "p", "q", "r"
+CALL CHECKS, "string list assignment", SA:0 + SA:1 + SA:2, "pqr"
+LS =
+CALL CHECKS, "string = with nothing", LS, ""
+;--- the : index can be a variable or an expression in parentheses
+LX = 2
+ARR:LX = 50
+CALL CHECKN, "index by variable", ARR:2, 50
+ARR:(LX + 1) = 60
+CALL CHECKN, "index by expression", ARR:3, 60
+;--- GOTO and $labels
+LX = 0
+$AGAIN
+LX += 1
+SIF LX < 3
+	GOTO AGAIN
+CALL CHECKN, "goto backwards", LX, 3
+GOTO FORWARD
+LX = 100
+$FORWARD
+CALL CHECKN, "goto forwards", LX, 3
+
+@CORE_SYNTAX_LOWER
+RETURN 77

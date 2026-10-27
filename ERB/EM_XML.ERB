@@ -1,0 +1,34 @@
+﻿;=== em.xml: Emuera-EM XML documents (XML_*) ===
+@EM_XML
+#DIM LX
+#DIMS LS
+CALL TOPIC, "em.xml"
+XML_DOCUMENT 0, "<root><a x='1'>one</a><a x='2'>two</a></root>"
+CALL CHECKN, "xml_exist", XML_EXIST(0) * 10 + XML_EXIST(9), 10
+CALL CHECKN, "xml_get counts nodes", XML_GET(0, "/root/a"), 2
+CALL CHECKN, "xml_get no match", XML_GET(0, "/root/b"), 0
+; (with 1 the nodes go to RESULTS: style 1 their text, style 0 their Value)
+LX = XML_GET(0, "/root/a[@x='2']", 1, 1)
+CALL CHECKS, "xml_get text into RESULTS", RESULTS, "two"
+LX = XML_GET(0, "/root/a/@x", 1)
+CALL CHECKS, "xml_get attribute values", RESULTS:0 + RESULTS:1, "12"
+XML_SET 0, "/root/a[@x='1']", "uno", 0, 1
+LX = XML_GET(0, "/root/a[1]", 1, 1)
+CALL CHECKS, "xml_set text", RESULTS, "uno"
+XML_SET 0, "/root/a[2]/@x", "7"
+CALL CHECKN, "xml_set attribute", XML_GET(0, "/root/a[@x='7']"), 1
+XML_ADDATTRIBUTE 0, "/root/a[1]", "y", "9"
+CALL CHECKN, "xml_addattribute", XML_GET(0, "/root/a[@y='9']"), 1
+XML_REMOVEATTRIBUTE 0, "/root/a[1]/@y"
+CALL CHECKN, "xml_removeattribute", XML_GET(0, "/root/a[@y='9']"), 0
+XML_ADDNODE 0, "/root", "<c>three</c>"
+CALL CHECKN, "xml_addnode", XML_GET(0, "/root/c"), 1
+XML_REMOVENODE 0, "/root/c"
+CALL CHECKN, "xml_removenode", XML_GET(0, "/root/c"), 0
+XML_REPLACE 0, "/root/a[2]", "<b>new</b>"
+CALL CHECKN, "xml_replace", XML_GET(0, "/root/b") * 10 + XML_GET(0, "/root/a"), 11
+CALL CHECKS, "xml_tostr", XML_TOSTR(0), "<root><a x=\"1\">uno</a><b>new</b></root>"
+XML_RELEASE 0
+CALL CHECKN, "xml_release", XML_EXIST(0), 0
+;--- XML_GET on a string (no document needed)
+CALL CHECKN, "xml_get on a string", XML_GET("<r><i/><i/><i/></r>", "/r/i"), 3

@@ -1,0 +1,9 @@
+# what an Emuera run leaves here
+Emuera.exe
+emuera.config
+emuera.log
+profile
+setting.json
+*.sav
+sav/
+dat/

@@ -1,0 +1,42 @@
+﻿;=== em.maps: Emuera-EM string maps (MAP_*) ===
+@EM_MAPS
+#DIM LX
+#DIMS KEYS, 5
+CALL TOPIC, "em.maps"
+CALL CHECKN, "map_create", MAP_CREATE("cm"), 1
+CALL CHECKN, "map_create of an existing map", MAP_CREATE("cm"), 0
+CALL CHECKN, "map_exist", MAP_EXIST("cm") * 10 + MAP_EXIST("nomap"), 10
+LX = MAP_SET("cm", "a", "1")
+LX = MAP_SET("cm", "b", "two")
+LX = MAP_SET("cm", "c", "")
+CALL CHECKN, "map_size", MAP_SIZE("cm"), 3
+CALL CHECKN, "map_size of a missing map is -1", MAP_SIZE("nomap"), -1
+CALL CHECKS, "map_get", MAP_GET("cm", "b"), "two"
+CALL CHECKS, "map_get of a missing key", MAP_GET("cm", "zz"), ""
+CALL CHECKN, "map_has", MAP_HAS("cm", "c") * 10 + MAP_HAS("cm", "zz"), 10
+CALL CHECKN, "map keys are case-sensitive", MAP_HAS("cm", "A"), 0
+LX = MAP_SET("cm", "a", "one")
+CALL CHECKS, "map_set replaces", MAP_GET("cm", "a"), "one"
+CALL CHECKS, "map_getkeys in insertion order", MAP_GETKEYS("cm"), "a,b,c"
+; into an array, MAP_GETKEYS sets RESULT to the count and returns "" (it is a
+; string function either way)
+KEYS:4 '= MAP_GETKEYS("cm", KEYS, 1)
+CALL CHECKN, "map_getkeys sets RESULT", RESULT, 3
+CALL CHECKS, "map_getkeys into an array returns an empty string", KEYS:4, ""
+CALL CHECKS, "map_getkeys into an array", KEYS:0 + KEYS:1 + KEYS:2, "abc"
+CALL CHECKS, "map_toxml", MAP_TOXML("cm"), "<map><p><k>a</k><v>one</v></p><p><k>b</k><v>two</v></p><p><k>c</k><v></v></p></map>"
+LX = MAP_CREATE("cm2")
+LX = MAP_FROMXML("cm2", MAP_TOXML("cm"))
+CALL CHECKS, "map_fromxml", MAP_GET("cm2", "b"), "two"
+LX = MAP_REMOVE("cm", "b")
+CALL CHECKN, "map_remove", MAP_SIZE("cm") * 10 + MAP_HAS("cm", "b"), 20
+LX = MAP_CLEAR("cm")
+CALL CHECKN, "map_clear", MAP_SIZE("cm"), 0
+LX = MAP_RELEASE("cm")
+LX = MAP_RELEASE("cm2")
+CALL CHECKN, "map_release", MAP_EXIST("cm"), 0
+;--- the statement forms
+MAP_CREATE "cm3"
+MAP_SET "cm3", "k", "v"
+CALL CHECKS, "map statements", MAP_GET("cm3", "k"), "v"
+MAP_RELEASE "cm3"
